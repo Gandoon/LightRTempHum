@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+<comment>---Environment monitor state and settings---</comment>
+<entry key="hTm">0</entry>
+<entry key="mTh">0</entry>
+<entry key="lTh">0</entry>
+<entry key="loBr">7</entry>
+<entry key="hiBr">127</entry>
+<entry key="dispOn">true</entry>
+<entry key="lTm">0</entry>
+<entry key="mTm">0</entry>
+<entry key="hFh">0</entry>
+<entry key="timeout">0</entry>
+<entry key="hFm">0</entry>
+<entry key="mFh">0</entry>
+<entry key="lFh">0</entry>
+<entry key="lFm">0</entry>
+<entry key="SerialPort">cu.usbmodem142101</entry>
+<entry key="mFm">0</entry>
+<entry key="logPath"></entry>
+<entry key="prefsPath">/Users/erik/Mjukvara/Eclipse-Java/LightRTempHum/EnvironmentPrefs.xml</entry>
+<entry key="saveLog">false</entry>
+<entry key="currPos">0</entry>
+<entry key="dayOnly">false</entry>
+<entry key="MacSerialPort">cu.usbmodem141521</entry>
+<entry key="WinSerialPort">COM5</entry>
+<entry key="hTh">0</entry>
+<entry key="miBr">31</entry>
+</properties>
