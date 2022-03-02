@@ -34,6 +34,7 @@ import org.jfree.chart.plot.dial.StandardDialRange;
 import org.jfree.chart.plot.dial.StandardDialScale;
 //import org.jfree.chart.renderer.xy.StandardXYItemRenderer;
 import org.jfree.chart.renderer.xy.XYItemRenderer;
+import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
 import org.jfree.chart.renderer.xy.XYSplineRenderer;
 import org.jfree.data.general.DefaultValueDataset;
 import org.jfree.data.time.Second;
@@ -113,8 +114,10 @@ public class EnvironmentMonitor {
     // 0.3	 - Added dials on the startup tab, added max/min indicators on the dials, and changed frame handling on primary tab to miglayout15.
     // 0.3.1 - Corrected DHT11 saturation level, removed unused library imports.
     // 0.3.2 - Fixed display control and a few other bugs found while performing less often used features
-    // 0.3.3 - Added a container panel on the plot tab, in preparation for interval selection and plot clearing provisions.
-	private final String version = "0.3.3";
+    // 0.3.3 - Added a container panel on the plot tab, in preparation for interval selection and plot clearing provisions. (branched)
+    // 0.3.4 - Implemented the clear button logic and changed to a XYLineAndShapeRenderer for the humidity portion of the plot (the spline overshoots where a bit distracting
+    // 		   when the change is minimal between data points).
+	private final String version = "0.3.4";
 	
 	/**
 	 * Launch the application.
@@ -879,7 +882,7 @@ public class EnvironmentMonitor {
 		JFreeChart thChart = ChartFactory.createTimeSeriesChart("Temperature and humidity", "", "Temperature (°C)", tDataset,true,true,false);
 		XYPlot plot = (XYPlot) thChart.getPlot();
 		XYSplineRenderer splinerenderer0 = new XYSplineRenderer();
-	    XYSplineRenderer splinerenderer1 = new XYSplineRenderer();
+		XYLineAndShapeRenderer splinerenderer1 = new XYLineAndShapeRenderer();
 		NumberAxis humAx = new NumberAxis("Rel. Humidity (%)");
 		humAx.setAutoRangeIncludesZero(false);
 		plot.setRangeAxis(1, humAx);
@@ -914,9 +917,11 @@ public class EnvironmentMonitor {
 		resetGraph.addActionListener(new ActionListener() {
         	public void actionPerformed(ActionEvent e) {
         		// Add the clearing code here
+        		tSeries.clear();
+        		hSeries.clear();
         	}
         });
-		resetGraph.setEnabled(false);
+		resetGraph.setEnabled(true); // button is now enabled
         plotPanel.add(resetGraph, "cell 2 12,alignx right,aligny bottom");
 		
 		tabbedPane.addTab("Plot", null, plotPanel, null);
