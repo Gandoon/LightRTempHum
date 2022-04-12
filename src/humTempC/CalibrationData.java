@@ -49,6 +49,10 @@ public class CalibrationData {
 	private int lFm;
 	private int lTm;
 	
+	// Settings for automatic updating of RTC
+	private int timeChInt;	// How often the test for RTC drift should be performed (in seconds)
+	private int aDrift;		// Allowed minor drift before a set event will occur. Defaults to 29 seconds.
+	
 	// Locally stored preferences object
 	private Properties prefs; 
 	private File logPath;
@@ -81,6 +85,8 @@ public class CalibrationData {
 		setLoToH(0);
 		setLoFromM(0);
 		setLoToM(0);
+		timeCheckInterval(3600);
+		allowedDrift(29);
 		}
 
 	/**
@@ -110,6 +116,8 @@ public class CalibrationData {
 		setLoToH(0);
 		setLoFromM(0);
 		setLoToM(0);
+		timeCheckInterval(3600);
+		allowedDrift(29);
 		//logPath = new File(); // Can not take an empty constructor
 	}
 
@@ -480,6 +488,34 @@ public class CalibrationData {
 	public void timeAutoSet(boolean timeAutoSet) {
 		this.timeAutoSet = timeAutoSet;
 	}
+	
+	/**
+	 * @return how often the automatic RTC precision check should be performed, in seconds.
+	 */
+	public int timeCheckInterval() {
+		return(timeChInt);
+	}
+	
+	/**
+	 * @param timeChInt : How often the automatic RTC precision check should be performed, in seconds. Defaults to one hour (3600 s).
+	 */
+	public void timeCheckInterval(int timeChInt) {
+		this.timeChInt = timeChInt;
+	}
+	
+	/**
+	 * @return the allowed minor drift before a set event will occur.
+	 */
+	public int allowedDrift() {
+		return(aDrift);
+	}
+	
+	/**
+	 * @param aDrift : Allowed minor drift before a set event will occur. Defaults to 29 seconds.
+	 */
+	public void allowedDrift(int aDrift) {
+		this.aDrift = aDrift;
+	}
 
 	/**
 	 * @return the logWriter
@@ -524,6 +560,8 @@ public class CalibrationData {
 		lTh = Integer.parseInt(prefs.getProperty("lTh", defaults.getProperty("lTh", "09")));
 		lTm = Integer.parseInt(prefs.getProperty("lTm", defaults.getProperty("lTm", "00")));
 		timeAutoSet = Boolean.parseBoolean(prefs.getProperty("timeAutoSet",defaults.getProperty("timeAutoSet","false")));
+		timeChInt = Integer.parseInt(prefs.getProperty("timeChInt", defaults.getProperty("timeChInt", "60")));
+		aDrift  = Integer.parseInt(prefs.getProperty("aDrift", defaults.getProperty("aDrift", "29")));
 		saveLog = Boolean.parseBoolean(prefs.getProperty("saveLog",defaults.getProperty("saveLog","false")));
 		logPath = new File(prefs.getProperty("logPath", defaults.getProperty("logPath", "")));
 		
@@ -579,6 +617,8 @@ public class CalibrationData {
 		prefs.setProperty("lTm", Integer.toString(lTm));	
 		prefs.setProperty("saveLog", Boolean.toString(saveLog));
 		prefs.setProperty("timeAutoSet", Boolean.toString(timeAutoSet));
+		prefs.setProperty("aDrift", Integer.toString(aDrift));
+		prefs.setProperty("timeChInt", Integer.toString(timeChInt));
 		if (saveLog) {
 			if (logPath != null) { 
 				prefs.setProperty("logPath",logPath.toString());
