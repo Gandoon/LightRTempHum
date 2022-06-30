@@ -2,6 +2,7 @@ package humTempC;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.util.Calendar;
 import java.util.Properties;
 
 /**
@@ -52,6 +53,8 @@ public class CalibrationData {
 	// Settings for automatic updating of RTC
 	private int timeChInt;	// How often the test for RTC drift should be performed (in seconds)
 	private int aDrift;		// Allowed minor drift before a set event will occur. Defaults to 29 seconds.
+	private Calendar lastChecked;
+	private boolean syncImmediately;
 	
 	// Locally stored preferences object
 	private Properties prefs; 
@@ -65,6 +68,7 @@ public class CalibrationData {
 //		setGotoPos(0);
 		logPath = null;
 		logWriter = null;
+		syncImmediately = true;
 		setComms(null);
 		//NDval[6] = {0.04, 0.5, 1.0, 1.5, 2.0, 2.5}; //new double[6]; 
 		// Set standard values for brightness
@@ -85,8 +89,10 @@ public class CalibrationData {
 		setLoToH(0);
 		setLoFromM(0);
 		setLoToM(0);
+		timeAutoSet(false);
 		timeCheckInterval(3600);
 		allowedDrift(29);
+		lastCheck(Calendar.getInstance());
 		}
 
 	/**
@@ -97,6 +103,7 @@ public class CalibrationData {
 //		setGotoPos(0);
 		logPath = null;
 		logWriter = null;
+		syncImmediately = true;
 		this.setComms(comms);
 		// Set standard values for brightness
 		setLoBr(7);
@@ -116,8 +123,10 @@ public class CalibrationData {
 		setLoToH(0);
 		setLoFromM(0);
 		setLoToM(0);
+		timeAutoSet(false);
 		timeCheckInterval(3600);
 		allowedDrift(29);
+		lastCheck(Calendar.getInstance());
 		//logPath = new File(); // Can not take an empty constructor
 	}
 
@@ -134,59 +143,6 @@ public class CalibrationData {
 	public void setComms(Communications comms) {
 		this.comms = comms;
 	}
-
-//	/**
-//	 * @return the currPos
-//	 */
-//	public int getCurrPos() {
-//		return currPos;
-//	}
-//
-//	/**
-//	 * @param currPos the currPos to set
-//	 */
-//	public void setCurrPos(int currPos) {
-//		this.currPos = currPos;
-//	}
-//	
-//	/**
-//	 * @return the gotoPos
-//	 */
-//	public int getGotoPos() {
-//		return gotoPos;
-//	}
-//
-//	/**
-//	 * @param gotoPos the gotoPos to set
-//	 */
-//	public void setGotoPos(int gotoPos) {
-//		this.gotoPos = gotoPos;
-//	}
-//
-//	/**
-//	 * @return the NDVal
-//	 */
-//	public double getNDVal() {
-//		return NDval[currPos];
-//	}
-//
-//	/**
-//	 * @return the selectedPos
-//	 */
-//	public int getSelectedPos() {
-//		return selectedPos;
-//	}
-//
-//	/**
-//	 * @param selectedPos the selectedPos to set
-//	 */
-//	public void setSelectedPos(int selectedPos) {
-//		this.selectedPos = selectedPos;
-//	}
-//	
-//	public void commitPos() {
-//		currPos = selectedPos;
-//	}
 
 	/**
 	 * @return the loBr
@@ -516,6 +472,23 @@ public class CalibrationData {
 	public void allowedDrift(int aDrift) {
 		this.aDrift = aDrift;
 	}
+	
+	public Calendar lastCheck() {
+		return lastChecked;
+	}
+	
+	public void lastCheck(Calendar lastChecked) {
+		this.lastChecked = lastChecked;
+	}
+	
+	public boolean immediateSync() {
+		// syncImmediately = !syncImmediately;
+		return syncImmediately;
+	}
+	
+	public void immediateSync(boolean syncImmediately) {
+		this.syncImmediately = syncImmediately;
+	}
 
 	/**
 	 * @return the logWriter
@@ -560,7 +533,11 @@ public class CalibrationData {
 		lTh = Integer.parseInt(prefs.getProperty("lTh", defaults.getProperty("lTh", "09")));
 		lTm = Integer.parseInt(prefs.getProperty("lTm", defaults.getProperty("lTm", "00")));
 		timeAutoSet = Boolean.parseBoolean(prefs.getProperty("timeAutoSet",defaults.getProperty("timeAutoSet","false")));
+//		System.out.print("Hardcoded timeChInt: ");
+//		System.out.println(timeChInt);
 		timeChInt = Integer.parseInt(prefs.getProperty("timeChInt", defaults.getProperty("timeChInt", "60")));
+//		System.out.print("Read timeChInt: ");
+//		System.out.println(timeChInt);
 		aDrift  = Integer.parseInt(prefs.getProperty("aDrift", defaults.getProperty("aDrift", "29")));
 		saveLog = Boolean.parseBoolean(prefs.getProperty("saveLog",defaults.getProperty("saveLog","false")));
 		logPath = new File(prefs.getProperty("logPath", defaults.getProperty("logPath", "")));

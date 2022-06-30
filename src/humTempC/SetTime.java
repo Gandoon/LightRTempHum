@@ -28,7 +28,7 @@ public class SetTime extends JDialog {
 	 */
 	private static final long serialVersionUID = -5929235661206170580L;
 	private final JPanel contentPanel = new JPanel();
-	//private CalibrationData calData; // May be needed later, if methods other than the constructor are added.
+	private CalibrationData calData; // May be needed later, if methods other than the constructor are added.
 	private JLabel lblManSet;
 	private JButton btnManSet, btnCurSet;
 	private JSpinner manDate;
@@ -51,7 +51,7 @@ public class SetTime extends JDialog {
 	 * Create the dialog.
 	 */
 	public SetTime(CalibrationData calData) {
-		//this.calData = calData;
+		this.calData = calData;
 		setBounds(100, 100, 450, 150);
 		getContentPane().setLayout(new BorderLayout());
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -64,6 +64,7 @@ public class SetTime extends JDialog {
 		contentPanel.setLayout(gbl_contentPanel);
 		{
 			autoSet = new JCheckBox("Set time automatically");
+			autoSet.setSelected(calData.timeAutoSet());
 			autoSet.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
 					JCheckBox sAut = (JCheckBox) e.getSource();
@@ -81,10 +82,10 @@ public class SetTime extends JDialog {
 						//calData.timeAutoSet(false);
 					}
 				}
-			});
-			autoSet.setSelected(calData.timeAutoSet());
-			autoSet.setEnabled(false);
+			});			
+			autoSet.setEnabled(true);
 			// TODO Enable this when the function has been implemented.
+			// ENABLED – Confirming functionality
 			autoSet.setToolTipText("Automatically update the Arduino RTC every hour if its \ntime deviates from local time by more than 5 seconds.\n(Currently not implemented)");
 			// At some point it may be beneficial to be able to set how large an offset is acceptable, and maybe how often it is tested
 			GridBagConstraints gbc_autoSet = new GridBagConstraints();
@@ -107,10 +108,11 @@ public class SetTime extends JDialog {
 //					System.out.println("Minute: "+now.get(Calendar.MINUTE));
 //					System.out.println("Second: "+now.get(Calendar.SECOND));
 					System.out.println("Sending command: "+"s"+Long.toString(now.getTime().getTime()));
+					commitTime(now.getTime());
 //					System.out.println("Integer.MAX_VALUE command: "+"s"+Long.toString(Integer.MAX_VALUE));
-					Communications comms = calData.getComms();
-					comms.sendCommand("s");// + Integer.MAX_VALUE);//Long.toString(now.getTime().getTime()));
-					comms.sendLong((now.getTime().getTime()+TimeZone.getDefault().getOffset(now.getTime().getTime()))/1000+1); 
+//					Communications comms = calData.getComms();
+//					comms.sendCommand("s");// + Integer.MAX_VALUE);//Long.toString(now.getTime().getTime()));
+//					comms.sendLong((now.getTime().getTime()+TimeZone.getDefault().getOffset(now.getTime().getTime()))/1000+1); 
 					// Add the time zone offset
 					//now.getTime().getTime());//Long.toString(now.getTime().getTime()));
 					//comms.sendCommand("\n");
@@ -118,6 +120,9 @@ public class SetTime extends JDialog {
 				}
 			});
 			btnCurSet.setToolTipText("Set Arduino RTC to current local time");
+			System.out.println("Setting up manual time setting button...");
+			System.out.println(autoSet.isSelected());
+			btnCurSet.setEnabled(!autoSet.isSelected());
 			GridBagConstraints gbc_btnNewButton = new GridBagConstraints();
 			gbc_btnNewButton.anchor = GridBagConstraints.EAST;
 			gbc_btnNewButton.gridwidth = 2;
@@ -142,6 +147,7 @@ public class SetTime extends JDialog {
 			gbc_lblNewLabel.insets = new Insets(0, 0, 0, 5);
 			gbc_lblNewLabel.gridx = 0;
 			gbc_lblNewLabel.gridy = 2;
+			lblManSet.setEnabled(!autoSet.isSelected());
 			contentPanel.add(lblManSet, gbc_lblNewLabel);
 		}
 		{
@@ -151,6 +157,7 @@ public class SetTime extends JDialog {
 			gbc_manDate.fill = GridBagConstraints.HORIZONTAL;
 			gbc_manDate.gridx = 2;
 			gbc_manDate.gridy = 2;
+			manDate.setEnabled(!autoSet.isSelected());
 			contentPanel.add(manDate, gbc_manDate);
 		}
 		{
@@ -163,9 +170,10 @@ public class SetTime extends JDialog {
 					System.out.println("Sending command: "+"s"+
 					(manSetDate.getTime()+TimeZone.getDefault().getOffset(manSetDate.getTime()))/1000+1);
 //					System.out.println("Integer.MAX_VALUE command: "+"s"+Long.toString(Integer.MAX_VALUE));
-					Communications comms = calData.getComms();
-					comms.sendCommand("s");// + Integer.MAX_VALUE);//Long.toString(now.getTime().getTime()));
-					comms.sendLong((manSetDate.getTime()+TimeZone.getDefault().getOffset(manSetDate.getTime()))/1000+1); 
+//					Communications comms = calData.getComms();
+//					comms.sendCommand("s");// + Integer.MAX_VALUE);//Long.toString(now.getTime().getTime()));
+//					comms.sendLong((manSetDate.getTime()+TimeZone.getDefault().getOffset(manSetDate.getTime()))/1000+1); 
+					commitTime(manSetDate);
 					
 				}
 			});
@@ -173,6 +181,7 @@ public class SetTime extends JDialog {
 			GridBagConstraints gbc_btnNewButton_1 = new GridBagConstraints();
 			gbc_btnNewButton_1.gridx = 3;
 			gbc_btnNewButton_1.gridy = 2;
+			btnManSet.setEnabled(!autoSet.isSelected());
 			contentPanel.add(btnManSet, gbc_btnNewButton_1);
 		}
 		{
@@ -181,11 +190,12 @@ public class SetTime extends JDialog {
 			getContentPane().add(buttonPane, BorderLayout.SOUTH);
 			{
 				JButton okButton = new JButton("OK");
+				// TODO Confirm that this bit actually does what it is meant to...
 				okButton.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
-						if ( autoSet.isSelected() ) {
-							calData.timeAutoSet(autoSet.isSelected());
-						}
+						// Commit the changes made to the autoSet feature (no need to check, just write what is known).
+						calData.timeAutoSet(autoSet.isSelected());
+						calData.immediateSync(true);
 						dispose();
 					}
 				});
@@ -197,9 +207,7 @@ public class SetTime extends JDialog {
 				JButton cancelButton = new JButton("Cancel");
 				cancelButton.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
-//						if ( autoSet.isSelected() ) {
-//							autoSet.setSelected(false);
-//						}
+						// No changes to the autoSet feature
 						dispose();
 					}
 				});
@@ -207,6 +215,12 @@ public class SetTime extends JDialog {
 				buttonPane.add(cancelButton);
 			}
 		}
+	}
+	
+	private void commitTime(Date setDate) {
+		Communications comms = calData.getComms();
+		comms.sendCommand("s");// + Integer.MAX_VALUE);//Long.toString(now.getTime().getTime()));
+		comms.sendLong((setDate.getTime()+TimeZone.getDefault().getOffset(setDate.getTime()))/1000+1); 
 	}
 
 }

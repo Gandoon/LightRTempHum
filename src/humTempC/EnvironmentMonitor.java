@@ -111,10 +111,13 @@ public class EnvironmentMonitor {
 	private TimeSeries tSeries, hSeries;
 	
 	// How often do we check for time drift on the RTC in minutes? Defaults to 60 minutes.
-	// These should be moved to the calData !!
-	private int timeCheckInterval = 10;
-	private int allowedDrift = 0;        // Allowed minor drift before a set event will occur. Defaults to 29 seconds.
-	private Calendar lastCheck = Calendar.getInstance(); // Give it some reasonable value to begin with
+	// These values have been moved to the calData. Change default values by editing preference file.	
+	// private int timeCheckInterval = 10;
+	// private int allowedDrift = 0;        // Allowed minor drift before a set event will occur. Defaults to 29 seconds.
+	
+	// Last known check of the clock on the board was at this time
+	// Moved to calData
+	// private Calendar lastCheck = Calendar.getInstance(); // Give it some reasonable value to begin with
 
 	private EnvironmentMonitor monitor;
 
@@ -126,6 +129,7 @@ public class EnvironmentMonitor {
 	// 		   when the change is minimal between data points).
 	// 0.3.5 - Initial implementation of automatic time and date setting.
 	private final String version = "0.3.5";
+	private final String cYear = "2022";
 
 	/**
 	 * Launch the application.
@@ -341,7 +345,7 @@ public class EnvironmentMonitor {
 			public void actionPerformed(ActionEvent e) {
 				if (calData.getComms().isConfigured())
 					calData.getComms().sendCommand("a\n");
-				JOptionPane.showMessageDialog(envFrame,"Arduino coupled environment monitor\nCopyright \u00a9 2021 Erik G Hedlund\n"
+				JOptionPane.showMessageDialog(envFrame,"Arduino coupled environment monitor\nCopyright \u00a9 "+cYear+" Erik G Hedlund\n"
 						+ "LightR\nAll rights reserved\nversion "+version+" for "+localOS,"About",JOptionPane.PLAIN_MESSAGE, wIcon); // 
 				if (calData.getComms().isConfigured())
 					calData.getComms().sendCommand("b\n");
@@ -370,6 +374,12 @@ public class EnvironmentMonitor {
 				System.out.println(prefsPath);
 				//prefs.setProperty("MacSerialPort", comms.getOpenPort().getSystemPortName());
 				//prefs.setProperty("WinSerialPort", "COM5");
+				
+				// For automatic time handling. We can edit the default settings by enabling these lines and setting the values as required.
+				// This is only for checking internal functioning and should be removed later.
+				// calData.timeCheckInterval(9);
+				// calData.allowedDrift(0);
+				
 				calData.storePrefs(prefs);
 				try {
 					if (repPath.createNewFile()) 
@@ -946,9 +956,9 @@ public class EnvironmentMonitor {
 			@Override public void run() {
 				// Wait after connection
 				String timeBuffer = null;
-				Calendar eCal; // Should be used in several places...
-				eCal = Calendar.getInstance();
-				if (firstRun) {lastCheck = eCal;}
+				Calendar eCal = Calendar.getInstance(); // Should be used in several places...
+				
+				if (firstRun) {calData.lastCheck(eCal);}
 				while(comms.isConfigured()) {
 
 					//boolean nlAv = comms.hasNewLine();
@@ -1122,11 +1132,13 @@ public class EnvironmentMonitor {
 							}
 						}
 						
-//						if(timeBuffer != null) {
-						System.out.println("Time since last date check: "+(eCal.getTime().getTime()-lastCheck.getTime().getTime())/1000);
-//						System.out.println("Saved allowedDrift: "+calData.allowedDrift()+" s");
+//						System.out.println("Time since last date check: "+(eCal.getTime().getTime()-calData.lastCheck().getTime().getTime())/1000 + " s");
 //						System.out.println("Saved timeCheckInterval: "+calData.timeCheckInterval()+" s");
-						if((eCal.getTime().getTime()-lastCheck.getTime().getTime())/1000 > timeCheckInterval && timeBuffer != null) {
+						if(((eCal.getTime().getTime()-calData.lastCheck().getTime().getTime())/1000 > calData.timeCheckInterval() || calData.immediateSync() )
+								&& calData.timeAutoSet() && timeBuffer != null) {
+//							System.out.println("Time since last date check: "+(eCal.getTime().getTime()-calData.lastCheck().getTime().getTime())/1000 + " s");
+							System.out.println("Saved allowedDrift: "+calData.allowedDrift()+" s");
+//							System.out.println("Internal allowedDrift: "+calData.allowedDrift()+" s");
 //							// Removing additional formatting, brackets and additional spaces at the beginning of the string
 //							// We can probably work around this, avoiding the following altogether.
 //							// timeBuffer = timeBuffer.replaceAll("\\[|\\]","");
@@ -1145,25 +1157,37 @@ public class EnvironmentMonitor {
 								System.out.println(eCal.get(Calendar.HOUR_OF_DAY));
 								//System.out.println("timebuffer length: "+timeBuffer.length());
 								//System.out.println(timeBuffer.substring(12,14));
-								System.out.print("Parsed hour: ");
-								System.out.println(Integer.parseInt(timeBuffer.substring(12,14).trim()));								
+								//if (calData.timeAutoSet()) {
+									setTime(Calendar.getInstance()); // eCal substituted for a fresh instantiation of a Calendar
+									System.out.print("Parsed hour: ");
+									System.out.println(Integer.parseInt(timeBuffer.substring(12,14).trim()));	
+								//}
 							} else if (eCal.get(Calendar.MINUTE) != Integer.parseInt(timeBuffer.substring(15,17).trim())) {
 								System.out.print("MINUTE: ");
 								System.out.println(eCal.get(Calendar.MINUTE));
 								//System.out.println("timebuffer length: "+timeBuffer.length());
 								//System.out.println(timeBuffer.substring(12,14));
-								System.out.print("Parsed minute: ");
-								System.out.println(Integer.parseInt(timeBuffer.substring(15,17).trim()));								
-							} else if (Math.abs(eCal.get(Calendar.SECOND) - Integer.parseInt(timeBuffer.substring(18,20).trim())) > allowedDrift) {
-								dummySetTime("SECOND: ");
+								//if (calData.timeAutoSet()) {
+									setTime(Calendar.getInstance());
+									System.out.print("Parsed minute: ");
+									System.out.println(Integer.parseInt(timeBuffer.substring(15,17).trim()));		
+								//}
+							} else if (Math.abs(Calendar.getInstance().get(Calendar.SECOND) - Integer.parseInt(timeBuffer.substring(18,20).trim())) > calData.allowedDrift()) {
+								// Using a fresh Calendar above to get the most accurate reading to avoid unnecessary writes
+								System.out.print("SECOND: ");
 								System.out.println(eCal.get(Calendar.SECOND));
-								System.out.println("Time difference: " + Math.abs(eCal.get(Calendar.SECOND) - Integer.parseInt(timeBuffer.substring(18,20).trim())) + "s");
+								System.out.println("Time difference: " + Math.abs(eCal.get(Calendar.SECOND) - Integer.parseInt(timeBuffer.substring(18,20).trim())) + " s");
 								//System.out.println("timebuffer length: "+timeBuffer.length());
 								//System.out.println(timeBuffer.substring(12,14));
-								dummySetTime("Parsed second: ");
-								System.out.println(Integer.parseInt(timeBuffer.substring(18,20).trim()));								
+								//if (calData.timeAutoSet()) {
+								
+									setTime(Calendar.getInstance());
+									System.out.print("Parsed second: ");
+									System.out.println(Integer.parseInt(timeBuffer.substring(18,20).trim()));
+								//}
 							}
-							lastCheck = Calendar.getInstance();
+							calData.immediateSync(false);
+							calData.lastCheck(Calendar.getInstance());
 
 							
 							
@@ -1213,9 +1237,10 @@ public class EnvironmentMonitor {
 				comms.sendCommand("s");// + Integer.MAX_VALUE);//Long.toString(now.getTime().getTime()));
 				comms.sendLong((now.getTime().getTime()+TimeZone.getDefault().getOffset(now.getTime().getTime()))/1000+1);
 			}	
-			private void dummySetTime(String outputThis) {
-				System.out.print(outputThis);
-			}	
+			// For testing purposes only...
+//			private void dummySetTime(String outputThis) {
+//				System.out.print(outputThis);
+//			}	
 		};
 		System.out.println("Starting publisher thread...");
 		publisher.start();	
