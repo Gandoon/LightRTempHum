@@ -16,13 +16,14 @@
 <entry key="mFh">19</entry>
 <entry key="lFh">23</entry>
 <entry key="lFm">0</entry>
-<entry key="SerialPort">cu.usbmodem142101</entry>
+<entry key="SerialPort"></entry>
 <entry key="mFm">0</entry>
-<entry key="prefsPath">/Users/erik/Mjukvara/Eclipse-Java/LightRTempHum/EnvironmentPrefs.xml</entry>
+<entry key="prefsPath">~/Library/Application Support/EnvironmentMonitor/EnvironmentPrefs.xml</entry>
+<entry key="macPrefsPath">Library/Application Support/EnvironmentMonitor/EnvironmentPrefs.xml</entry>
 <entry key="saveLog">false</entry>
 <entry key="currPos">0</entry>
 <entry key="dayOnly">false</entry>
-<entry key="MacSerialPort">cu.usbmodem141521</entry>
+<entry key="MacSerialPort"></entry>
 	<entry key="LinuxSerialPort">ttyACM0</entry>
 	<entry key="WinSerialPort">COM1</entry>
 <entry key="hTh">0</entry>
