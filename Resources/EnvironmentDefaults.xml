@@ -18,14 +18,14 @@
 <entry key="lFm">0</entry>
 <entry key="SerialPort"></entry>
 <entry key="mFm">0</entry>
-<entry key="prefsPath">~/Library/Application Support/EnvironmentMonitor/EnvironmentPrefs.xml</entry>
+<entry key="prefsPath"></entry>
 <entry key="macPrefsPath">Library/Application Support/EnvironmentMonitor/EnvironmentPrefs.xml</entry>
 <entry key="saveLog">false</entry>
 <entry key="currPos">0</entry>
 <entry key="dayOnly">false</entry>
 <entry key="MacSerialPort"></entry>
-	<entry key="LinuxSerialPort">ttyACM0</entry>
-	<entry key="WinSerialPort">COM1</entry>
+<entry key="LinuxSerialPort"></entry>
+<entry key="WinSerialPort"></entry>
 <entry key="hTh">0</entry>
 <entry key="miBr">31</entry>
 </properties>
