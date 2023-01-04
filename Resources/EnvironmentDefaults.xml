@@ -19,6 +19,7 @@
 <entry key="SerialPort"></entry>
 <entry key="mFm">0</entry>
 <entry key="prefsPath"></entry>
+<entry key="nixPrefsPath">.EnvironmentMonitor/EnvironmentPrefs.xml</entry>
 <entry key="macPrefsPath">Library/Application Support/EnvironmentMonitor/EnvironmentPrefs.xml</entry>
 <entry key="saveLog">false</entry>
 <entry key="currPos">0</entry>

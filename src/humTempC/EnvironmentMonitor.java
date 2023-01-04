@@ -136,13 +136,23 @@ public class EnvironmentMonitor {
 	// selection and plot clearing provisions. (branched)
 	// 0.3.4 - Implemented the clear button logic and changed to a
 	// XYLineAndShapeRenderer for the humidity portion of the plot (the spline
-	// overshoots where a bit distracting
-	// when the change is minimal between data points).
+	// overshoots were a bit distracting when the change is minimal between data
+	// points).
 	// 0.3.5 - Initial implementation of automatic time and date setting.
 	// 0.3.6 – Fixing the loading of initial values for preference file location on
 	// MacOS and removing preset serial port numbers as this broke the startup.
-	private final String version = "0.3.6";
-	private final String cYear = "2022";
+	// 0.3.7 - Fixing the exceptions arising from trying to write preferences to a
+	// nonexistent directory. We now catch this and create the directory if it does
+	// not exist.
+	// Confirming functionality of automatic time correction.
+	// We also create a default location for other unix-like systems as an xml-file
+	// in a dot-directory under the users home directory (~).
+	// A default for Windows would of course also be nice, but that is something I
+	// do not have the relevant expertise to fix blindly without a testing machine
+	// unfortunately.
+
+	private final String version = "0.3.7";
+	private final String cYear = "2021-2023";
 
 	/**
 	 * Launch the application.
@@ -210,7 +220,12 @@ public class EnvironmentMonitor {
 			// the hard default on MacOS.
 			if (localOS == OSType.MacOS) {
 				prefsPath = new File(System.getProperty("user.home") + "/" + defaults.getProperty("macPrefsPath"));
+			} else if (localOS == OSType.Linux || localOS == OSType.Other) {
+				// Assuming "Other" is some sort of unix-like system, we include them in the
+				// dot-directory scheme.
+				prefsPath = new File(System.getProperty("user.home") + "/" + defaults.getProperty("nixPrefsPath"));
 			} else {
+				// TODO We are on a Windows system... This need to be fixed at some point
 				prefsPath = new File(defaults.getProperty("prefsPath"));
 			}
 			System.out.println("Loaded prefsPath from Defaults: " + prefsPath);
@@ -256,7 +271,8 @@ public class EnvironmentMonitor {
 			System.out.println("No preferences found...\nLoading defaults.");
 			prefs = defaults;
 		} catch (NullPointerException e2) {
-			System.out.println("Totally failed to open prefs file, this should not normally happen...");
+			System.out.println("Totally failed to open prefs file, this should not happen..."); // normally ... More
+																								// like never
 			e2.printStackTrace();
 			return;
 		}
@@ -321,7 +337,7 @@ public class EnvironmentMonitor {
 				System.out.println("Port " + comms.getOpenPort().getSystemPortName() + " already open");
 			}
 		} else if (localOS == OSType.Windows) {
-			portStringDefault = defaults.getProperty("WinSerialPort", "COM5");
+			portStringDefault = defaults.getProperty("WinSerialPort", "");
 			portString = prefs.getProperty("SerialPort", portStringDefault);
 			SerialPort port;
 			if (portString.equals("")) {
@@ -411,14 +427,23 @@ public class EnvironmentMonitor {
 				calData.storePrefs(prefs);
 				try {
 					if (repPath.createNewFile())
-						System.out.println("file not found.\nCreating file...");
+						System.out.println("file not found.\nAttempting to create file...");
 					else
 						System.out.println("file already exists");
 				} catch (IOException e1) {
-					// TODO Auto-generated catch block
-					System.out.println(
-							"IO exception while trying to create file; " + repPath + "... \n (Should not happen.)");
-					e1.printStackTrace();
+					System.out.println("IO exception while trying to create file; " + repPath + "... \n ("
+							+ e1.getMessage() + ")");
+					System.out.println("We need to create: " + repPath.getParent());
+					try {
+						System.out.println("Creating direcctory...");
+						repPath.getParentFile().mkdir();
+						System.out.println("Attempting again to create file...");
+						repPath.createNewFile();
+					} catch (IOException e2) {
+						System.out.println("Could not create directory or file...");
+						e2.printStackTrace();
+					}
+					// e1.printStackTrace();
 				}
 				try (FileOutputStream pOutx = new FileOutputStream(repPath)) { // ,"FilterPrefs.xml"
 					// FileOutputStream pOut = new FileOutputStream("FilterPrefs.conf");
@@ -561,7 +586,18 @@ public class EnvironmentMonitor {
 			}
 		});
 
+		// This MenuItem has been disabled, since it is a bit unlikely to work outside
+		// the development environment. When used as intended, the initial defaults are
+		// read from an xml-file packaged in the jar and it will have a static reference
+		// to the default location and data will never be written to it, so the notes of
+		// where the preferences are located will not be read unless a file in the
+		// standard location exists. This turned out to be more of a headache than a
+		// useful addition. If this is to work, a better solution needs to be
+		// implemented. For now, the default locations are perfectly adequate. A
+		// standard location for Windows does not exist however.
 		JMenuItem mntmSelectSettingsLocation = new JMenuItem("Select settings location");
+		mntmSelectSettingsLocation.setEnabled(false);
+		mntmSelectSettingsLocation.setVisible(false);
 		mntmSelectSettingsLocation
 				.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK | InputEvent.ALT_MASK));
 		mntmSelectSettingsLocation.addActionListener(new ActionListener() {
@@ -676,7 +712,7 @@ public class EnvironmentMonitor {
 		JLabel humLabel = new JLabel("Relative humidity");
 		readoutPanel.add(humLabel, "cell 3 6,alignx center,aligny top");
 
-		humOut = new JTextArea("        ");
+		humOut = new JTextArea(" - - - %");
 		humOut.setEditable(false);
 		humOut.setBackground(new Color(50, 205, 50));
 		humOut.setFont(new Font("Lucida Grande", Font.BOLD, 24));
