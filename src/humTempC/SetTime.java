@@ -57,10 +57,10 @@ public class SetTime extends JDialog {
 		contentPanel.setBorder(new EmptyBorder(5, 5, 5, 5));
 		getContentPane().add(contentPanel, BorderLayout.CENTER);
 		GridBagLayout gbl_contentPanel = new GridBagLayout();
-		gbl_contentPanel.columnWidths = new int[]{0, 0, 0, 0, 0};
-		gbl_contentPanel.rowHeights = new int[]{0, 0, 0, 0};
-		gbl_contentPanel.columnWeights = new double[]{0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE};
-		gbl_contentPanel.rowWeights = new double[]{0.0, 0.0, 0.0, Double.MIN_VALUE};
+		gbl_contentPanel.columnWidths = new int[] { 0, 0, 0, 0, 0 };
+		gbl_contentPanel.rowHeights = new int[] { 0, 0, 0, 0 };
+		gbl_contentPanel.columnWeights = new double[] { 0.0, 0.0, 0.0, 0.0, Double.MIN_VALUE };
+		gbl_contentPanel.rowWeights = new double[] { 0.0, 0.0, 0.0, Double.MIN_VALUE };
 		contentPanel.setLayout(gbl_contentPanel);
 		{
 			autoSet = new JCheckBox("Set time automatically");
@@ -73,21 +73,25 @@ public class SetTime extends JDialog {
 						btnManSet.setEnabled(false);
 						btnCurSet.setEnabled(false);
 						manDate.setEnabled(false);
-						//calData.timeAutoSet(true);
+						// calData.timeAutoSet(true);
 					} else {
 						lblManSet.setEnabled(true);
 						btnManSet.setEnabled(true);
 						btnCurSet.setEnabled(true);
 						manDate.setEnabled(true);
-						//calData.timeAutoSet(false);
+						// calData.timeAutoSet(false);
 					}
 				}
-			});			
+			});
 			autoSet.setEnabled(true);
-			// TODO Enable this when the function has been implemented.
+			// TODO Possibly add a field to set maximum allowed drift. Currently set at 29 s
+			// and is adjustable by editing the preference file directly.
 			// ENABLED – Confirming functionality
-			autoSet.setToolTipText("Automatically update the Arduino RTC every hour if its \ntime deviates from local time by more than 5 seconds.\n(Currently not implemented)");
-			// At some point it may be beneficial to be able to set how large an offset is acceptable, and maybe how often it is tested
+			autoSet.setToolTipText(
+					"Automatically update the Arduino RTC every hour if its \ntime deviates from local time by more than "
+							+ Integer.toString(calData.allowedDrift()) + " seconds");
+			// At some point it may be beneficial to be able to set how large an offset is
+			// acceptable, and maybe how often it is tested
 			GridBagConstraints gbc_autoSet = new GridBagConstraints();
 			gbc_autoSet.gridwidth = 2;
 			gbc_autoSet.insets = new Insets(0, 0, 5, 5);
@@ -107,16 +111,16 @@ public class SetTime extends JDialog {
 //					System.out.println("Hour: "+now.get(Calendar.HOUR_OF_DAY));
 //					System.out.println("Minute: "+now.get(Calendar.MINUTE));
 //					System.out.println("Second: "+now.get(Calendar.SECOND));
-					System.out.println("Sending command: "+"s"+Long.toString(now.getTime().getTime()));
+					System.out.println("Sending command: " + "s" + Long.toString(now.getTime().getTime()));
 					commitTime(now.getTime());
 //					System.out.println("Integer.MAX_VALUE command: "+"s"+Long.toString(Integer.MAX_VALUE));
 //					Communications comms = calData.getComms();
 //					comms.sendCommand("s");// + Integer.MAX_VALUE);//Long.toString(now.getTime().getTime()));
 //					comms.sendLong((now.getTime().getTime()+TimeZone.getDefault().getOffset(now.getTime().getTime()))/1000+1); 
 					// Add the time zone offset
-					//now.getTime().getTime());//Long.toString(now.getTime().getTime()));
-					//comms.sendCommand("\n");
-					//System.out.println(now.toString());
+					// now.getTime().getTime());//Long.toString(now.getTime().getTime()));
+					// comms.sendCommand("\n");
+					// System.out.println(now.toString());
 				}
 			});
 			btnCurSet.setToolTipText("Set Arduino RTC to current local time");
@@ -164,17 +168,18 @@ public class SetTime extends JDialog {
 			btnManSet = new JButton("Set time");
 			btnManSet.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent e) {
-					//DONE Dig out the selected date and time and send it
+					// DONE Dig out the selected date and time and send it
 					Date manSetDate = (Date) manDate.getValue();
-					System.out.println("Manual time to set: "+manSetDate.getTime());
-					System.out.println("Sending command: "+"s"+
-					(manSetDate.getTime()+TimeZone.getDefault().getOffset(manSetDate.getTime()))/1000+1);
+					System.out.println("Manual time to set: " + manSetDate.getTime());
+					System.out.println("Sending command: " + "s"
+							+ (manSetDate.getTime() + TimeZone.getDefault().getOffset(manSetDate.getTime())) / 1000
+							+ 1);
 //					System.out.println("Integer.MAX_VALUE command: "+"s"+Long.toString(Integer.MAX_VALUE));
 //					Communications comms = calData.getComms();
 //					comms.sendCommand("s");// + Integer.MAX_VALUE);//Long.toString(now.getTime().getTime()));
 //					comms.sendLong((manSetDate.getTime()+TimeZone.getDefault().getOffset(manSetDate.getTime()))/1000+1); 
 					commitTime(manSetDate);
-					
+
 				}
 			});
 			btnManSet.setToolTipText("Set Arduion RTC to manually selected date and time");
@@ -193,7 +198,8 @@ public class SetTime extends JDialog {
 				// TODO Confirm that this bit actually does what it is meant to...
 				okButton.addActionListener(new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
-						// Commit the changes made to the autoSet feature (no need to check, just write what is known).
+						// Commit the changes made to the autoSet feature (no need to check, just write
+						// what is known).
 						calData.timeAutoSet(autoSet.isSelected());
 						calData.immediateSync(true);
 						dispose();
@@ -216,11 +222,11 @@ public class SetTime extends JDialog {
 			}
 		}
 	}
-	
+
 	private void commitTime(Date setDate) {
 		Communications comms = calData.getComms();
 		comms.sendCommand("s");// + Integer.MAX_VALUE);//Long.toString(now.getTime().getTime()));
-		comms.sendLong((setDate.getTime()+TimeZone.getDefault().getOffset(setDate.getTime()))/1000+1); 
+		comms.sendLong((setDate.getTime() + TimeZone.getDefault().getOffset(setDate.getTime())) / 1000 + 1);
 	}
 
 }
