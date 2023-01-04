@@ -5,7 +5,7 @@ import java.awt.EventQueue;
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
 import javax.swing.JDialog;
-import javax.swing.JFileChooser;
+// import javax.swing.JFileChooser; // Not currently in use here
 import javax.swing.JFrame;
 import javax.swing.JMenuBar;
 import javax.swing.JMenu;
@@ -299,11 +299,22 @@ public class EnvironmentMonitor {
 				System.out.println("Selecting default port: " + portStringDefault);
 				port = SerialPort.getCommPort(portStringDefault);
 			} else {
-				port = SerialPort.getCommPort(portString);
-				System.out.println("Selecting port from previous session: " + portString);
+				try {
+					System.out.println("Selecting port from previous session: " + portString);
+					port = SerialPort.getCommPort(portString);
+				} catch (com.fazecast.jSerialComm.SerialPortInvalidPortException sex) {
+					System.out.println("Port from previous session, " + portString + " is not valid.");
+					System.out.println("Trying with default");
+					port = SerialPort.getCommPort(portStringDefault);
+					// SerialPortSelect dialog = new SerialPortSelect(comms, monitor);
+					// dialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
+					// dialog.setVisible(true);
+					// dialog.setAlwaysOnTop(true);
+					// port = comms.getOpenPort();
+				}
 			}
 			// port = SerialPort.getCommPort(portList.getSelectedItem().toString());
-			System.out.println("Selected port: " + port.getSystemPortName());
+			// System.out.println("Selected port: [" + port.getSystemPortName() + "]");
 			port.setComPortTimeouts(SerialPort.TIMEOUT_READ_SEMI_BLOCKING, 0, 0); // TIMEOUT_NONBLOCKING
 			if (!port.isOpen()) { // false ) {//
 				if (port.openPort()) {
@@ -595,80 +606,71 @@ public class EnvironmentMonitor {
 		// useful addition. If this is to work, a better solution needs to be
 		// implemented. For now, the default locations are perfectly adequate. A
 		// standard location for Windows does not exist however.
-		JMenuItem mntmSelectSettingsLocation = new JMenuItem("Select settings location");
-		mntmSelectSettingsLocation.setEnabled(false);
-		mntmSelectSettingsLocation.setVisible(false);
-		mntmSelectSettingsLocation
-				.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK | InputEvent.ALT_MASK));
-		mntmSelectSettingsLocation.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				// JFrame chooserFrame = new JFrame();
-				JFileChooser chooser = new JFileChooser();
-				// FileNameExtensionFilter filter = new FileNameExtensionFilter("TXT files",
-				// "txt");
-				// chooser.setFileFilter(filter);
-				chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
-				chooser.setFileHidingEnabled(false);
-				// chooser.setCurrentDirectory(new File("").getAbsoluteFile());
-				chooser.setCurrentDirectory(prefsPath);
-				chooser.setDialogTitle("Select folder to save session settings to");
-				chooser.setDialogType(JFileChooser.SAVE_DIALOG);
-				int returnVal = chooser.showSaveDialog(envFrame);
-				// ArrayList<JPanel> jpanels = new ArrayList<JPanel>();
-				// for(Component c : chooser.getComponents()){
-				// if( c instanceof JPanel ){
-				// jpanels.add((JPanel)c);
-				// }
-				// }
-				// jpanels.get(0).getComponent(0).setVisible(false);
-				// File dir = chooser.getSelectedFile();
-				// if(!dir.exists()){
-				// dir = dir.getParentFile();
-				// }
-				// chooserFrame.getContentPane().add(chooser);
-				// chooserFrame.pack();
-				// chooserFrame.setVisible(true);
-
-				if (returnVal == JFileChooser.APPROVE_OPTION) {
-					File altPrefsPath = new File(chooser.getSelectedFile(), "EnvironmentPrefs.xml");
-					System.out.print("Original prefsPath: ");
-					System.out.println(prefsPath);
-					prefs.setProperty("prefsPath", altPrefsPath.getAbsolutePath());
-					System.out.print("AltPrefsPath: ");
-					System.out.println(altPrefsPath.getAbsolutePath());
-					try {
-						if (altPrefsPath.createNewFile())
-							System.out.println("file not found.\nCreating file...");
-						else
-							System.out.println("file already exists");
-					} catch (IOException e1) {
-						// TODO Auto-generated catch block
-						System.out.println("IO exception while trying to create file... \n (Should not happen.)");
-						e1.printStackTrace();
-					}
-					try (FileOutputStream pOutx = new FileOutputStream(prefsPath)) { // new
-																						// File(prefsPath,"FilterPrefs.xml")
-						// FileOutputStream pOut = new FileOutputStream("FilterPrefs.conf");
-						// prefs.store(pOut, "---Filter wheel defaults---");
-						prefs.storeToXML(pOutx, "---Environment monitor state and settings---");
-						// pOut.close();
-						pOutx.close();
-					} catch (Exception ex) {
-						System.out.println("Exception while saving preferences to standard file...");
-						ex.printStackTrace();
-					}
-					// System.out.println("You chose to save settings to this folder: " +
-					// chooser.getSelectedFile().getAbsolutePath());
-					prefsPath = altPrefsPath; // new File (altPrefsPath,"FilterPrefs.xml");
-					System.out.print("You chose to save settings to this file: ");
-					System.out.println(prefsPath);
-				} else if (returnVal == JFileChooser.CANCEL_OPTION) {
-					System.out.println("Cancel selected, previous path still valid.");
-				}
-				// int returnVal = fc.showOpenDialog(aComponent);
-			}
-		});
-		mnEnvMenu.add(mntmSelectSettingsLocation);
+		/*
+		 * JMenuItem mntmSelectSettingsLocation = new
+		 * JMenuItem("Select settings location");
+		 * mntmSelectSettingsLocation.setEnabled(false);
+		 * mntmSelectSettingsLocation.setVisible(false); mntmSelectSettingsLocation
+		 * .setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_S, InputEvent.CTRL_MASK |
+		 * InputEvent.ALT_MASK)); mntmSelectSettingsLocation.addActionListener(new
+		 * ActionListener() { public void actionPerformed(ActionEvent e) { // JFrame
+		 * chooserFrame = new JFrame(); JFileChooser chooser = new JFileChooser(); //
+		 * FileNameExtensionFilter filter = new FileNameExtensionFilter("TXT files", //
+		 * "txt"); // chooser.setFileFilter(filter);
+		 * chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
+		 * chooser.setFileHidingEnabled(false); // chooser.setCurrentDirectory(new
+		 * File("").getAbsoluteFile()); chooser.setCurrentDirectory(prefsPath);
+		 * chooser.setDialogTitle("Select folder to save session settings to");
+		 * chooser.setDialogType(JFileChooser.SAVE_DIALOG); int returnVal =
+		 * chooser.showSaveDialog(envFrame); // ArrayList<JPanel> jpanels = new
+		 * ArrayList<JPanel>(); // for(Component c : chooser.getComponents()){ // if( c
+		 * instanceof JPanel ){ // jpanels.add((JPanel)c); // } // } //
+		 * jpanels.get(0).getComponent(0).setVisible(false); // File dir =
+		 * chooser.getSelectedFile(); // if(!dir.exists()){ // dir =
+		 * dir.getParentFile(); // } // chooserFrame.getContentPane().add(chooser); //
+		 * chooserFrame.pack(); // chooserFrame.setVisible(true);
+		 * 
+		 * if (returnVal == JFileChooser.APPROVE_OPTION) { File altPrefsPath = new
+		 * File(chooser.getSelectedFile(), "EnvironmentPrefs.xml");
+		 * System.out.print("Original prefsPath: "); System.out.println(prefsPath);
+		 * prefs.setProperty("prefsPath", altPrefsPath.getAbsolutePath());
+		 * System.out.print("AltPrefsPath: ");
+		 * System.out.println(altPrefsPath.getAbsolutePath()); try { if
+		 * (altPrefsPath.createNewFile())
+		 * System.out.println("file not found.\nAttempting to create file..."); else
+		 * System.out.println("file already exists"); } catch (IOException e1) { // TODO
+		 * Auto-generated catch block System.out.
+		 * println("IO exception while trying to create file... \n (Should not happen.)"
+		 * );
+		 * 
+		 * System.out.println("IO exception while trying to create file; " +
+		 * altPrefsPath + "... \n (" + e1.getMessage() + ")");
+		 * System.out.println("We need to create: " + altPrefsPath.getParent()); try {
+		 * System.out.println("Creating direcctory...");
+		 * altPrefsPath.getParentFile().mkdir();
+		 * System.out.println("Attempting again to create file...");
+		 * altPrefsPath.createNewFile(); } catch (IOException e2) {
+		 * System.out.println("Could not create directory or file...");
+		 * e2.printStackTrace(); }
+		 * 
+		 * e1.printStackTrace(); } try (FileOutputStream pOutx = new
+		 * FileOutputStream(prefsPath)) { // new // File(prefsPath,"FilterPrefs.xml") //
+		 * FileOutputStream pOut = new FileOutputStream("FilterPrefs.conf"); //
+		 * prefs.store(pOut, "---Filter wheel defaults---"); prefs.storeToXML(pOutx,
+		 * "---Environment monitor state and settings---"); // pOut.close();
+		 * pOutx.close(); } catch (Exception ex) {
+		 * System.out.println("Exception while saving preferences to standard file...");
+		 * ex.printStackTrace(); } //
+		 * System.out.println("You chose to save settings to this folder: " + //
+		 * chooser.getSelectedFile().getAbsolutePath()); prefsPath = altPrefsPath; //
+		 * new File (altPrefsPath,"FilterPrefs.xml");
+		 * System.out.print("You chose to save settings to this file: ");
+		 * System.out.println(prefsPath); } else if (returnVal ==
+		 * JFileChooser.CANCEL_OPTION) {
+		 * System.out.println("Cancel selected, previous path still valid."); } // int
+		 * returnVal = fc.showOpenDialog(aComponent); } });
+		 * mnEnvMenu.add(mntmSelectSettingsLocation);
+		 */
 		mnEnvMenu.add(mntmConfSerial);
 
 		JTabbedPane tabbedPane = new JTabbedPane(JTabbedPane.TOP);
