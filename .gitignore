@@ -12,3 +12,6 @@ lib/OSX/x86_64/libjSerialComm.jnilib
 *.dll
 lib/META-INF/MANIFEST.MF
 miglayout-src.zip
+/bin/
+/lib/
+/.settings/
